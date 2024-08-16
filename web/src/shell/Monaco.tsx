@@ -189,6 +189,7 @@ export const Monaco = ({
         quickSuggestions: {
           other: "inline",
         },
+        wordWrap:"on"
       });
 
       document.fonts.ready.then(() => {
