@@ -275,7 +275,7 @@ export const Chip = () => {
     );
     const hdlPanel = (
         <Panel
-            className="_hdl_panel"
+            className="_hdl_panel resizable"
             isEditorPanel={true}
             panelRef={hdlPanelRef}
             header={
@@ -384,7 +384,7 @@ export const Chip = () => {
 
     const pinsPanel = (
         <Panel
-            className="_parts_panel"
+            className="_parts_panel resizable"
             panelRef={partsPanelRef}
             header={
                 <>
@@ -419,6 +419,7 @@ export const Chip = () => {
 
     const testPanel = (
         <TestPanel
+            panelClassName={"resizable"}
             runner={runner}
             disabled={state.sim.invalid}
             showLoad={false}

@@ -16,7 +16,7 @@ export const Panel = (props: {
   return (
     <article
       className={[
-        "panel resizable",
+        "panel",
         props.className ?? "",
         props.isEditorPanel ? "editor" : "",
       ].join(" ")}
