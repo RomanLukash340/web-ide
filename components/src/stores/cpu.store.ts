@@ -133,8 +133,8 @@ export function makeCpuStore(
       const passed = compare(state.test.cmp.trim(), test.log().trim());
       setStatus(
         passed
-          ? `Simulation successful: The output file is identical to the compare file`
-          : `Simulation error: The output file differs from the compare file`,
+          ? `Test passed`
+          : `Test failed`,
       );
     },
 

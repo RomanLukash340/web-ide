@@ -176,8 +176,8 @@ export function makeVmStore(
       const passed = compare(state.files.cmp.trim(), state.files.out);
       setStatus(
         passed
-          ? `Simulation successful: The output file is identical to the compare file`
-          : `Simulation error: The output file differs from the compare file`,
+          ? `Test passed`
+          : `Test failed`,
       );
     },
 
