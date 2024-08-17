@@ -47,6 +47,8 @@ export const TestPanel = ({
   speed,
   onSpeedChange,
   prefix,
+  panelRef: panelRef,
+  panelClassName: panelClassName,
 }: {
   runner: RefObject<Timer | undefined>;
   tst: [string, Dispatch<string>, Span | undefined];
@@ -63,6 +65,8 @@ export const TestPanel = ({
   speed?: RunSpeed;
   onSpeedChange?: (speed: number) => void;
   prefix?: ReactNode;
+  panelRef?: React.RefObject<HTMLDivElement>;
+  panelClassName?: string;
 }) => {
   const { fs, setStatus } = useContext(BaseContext);
   const { filePicker, tracking } = useContext(AppContext);
@@ -193,10 +197,13 @@ export const TestPanel = ({
       </article>
     </dialog>
   );
-
+  const defaultTestPanelClassName= " _test_panel"
+  const _panelClassName = panelClassName ? panelClassName+defaultTestPanelClassName :
+      defaultTestPanelClassName   ;
   return (
     <Panel
-      className="_test_panel"
+      className={_panelClassName}
+      panelRef={panelRef}
       header={
         <>
           <div>

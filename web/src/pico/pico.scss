@@ -1,3 +1,8 @@
+.resizable {
+  resize: horizontal;
+  position: relative;
+}
+
 @layer user {
   body {
     -webkit-font-smoothing: antialiased;

@@ -1,56 +1,109 @@
-import { Trans, t } from "@lingui/macro";
-import {
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import {t, Trans} from "@lingui/macro";
+import React, {ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState,} from "react";
 
 import "./chip.scss";
 
-import { makeVisualizationsWithId } from "@nand2tetris/components/chips/visualizations.js";
-import { Clockface } from "@nand2tetris/components/clockface.js";
-import {
-  FullPinout,
-  PinContext,
-  PinResetDispatcher,
-} from "@nand2tetris/components/pinout.js";
-import { useStateInitializer } from "@nand2tetris/components/react.js";
-import { BaseContext } from "@nand2tetris/components/stores/base.context.js";
-import {
-  Files,
-  PROJECT_NAMES,
-  isBuiltinOnly,
-} from "@nand2tetris/components/stores/chip.store.js";
-import { CHIP_PROJECTS } from "@nand2tetris/projects/base.js";
-import { HDL } from "@nand2tetris/simulator/languages/hdl.js";
-import { Timer } from "@nand2tetris/simulator/timer.js";
-import { TestPanel } from "src/shell/test_panel";
+import {makeVisualizationsWithId} from "@nand2tetris/components/chips/visualizations.js";
+import {Clockface} from "@nand2tetris/components/clockface.js";
+import {FullPinout, PinContext, PinResetDispatcher,} from "@nand2tetris/components/pinout.js";
+import {useStateInitializer} from "@nand2tetris/components/react.js";
+import {BaseContext} from "@nand2tetris/components/stores/base.context.js";
+import {Files, isBuiltinOnly, PROJECT_NAMES,} from "@nand2tetris/components/stores/chip.store.js";
+import {CHIP_PROJECTS} from "@nand2tetris/projects/base.js";
+import {HDL} from "@nand2tetris/simulator/languages/hdl.js";
+import {Timer} from "@nand2tetris/simulator/timer.js";
+import {TestPanel} from "src/shell/test_panel";
 import {AppContext} from "../App.context";
-import { PageContext } from "../Page.context";
-import { Editor } from "../shell/editor";
-import { Accordian, Panel } from "../shell/panel";
-import { zip } from "../shell/zip";
+import {PageContext} from "../Page.context";
+import {Editor} from "../shell/editor";
+import {Accordian, Panel} from "../shell/panel";
+import {zip} from "../shell/zip";
+import useResizeObserver from "@react-hook/resize-observer";
+
+const useScreenWidth = () => {
+    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setScreenWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+
+    }, []);
+    return screenWidth;
+
+};
 
 export const Chip = () => {
-  const { setStatus } = useContext(BaseContext);
-  const { stores, setTool } = useContext(PageContext);
-  const { tracking } = useContext(AppContext);
-  const { state, actions, dispatch } = stores.chip;
-  const { theme } = useContext(AppContext);
+    const screenWidth = useScreenWidth();
+    const {setStatus} = useContext(BaseContext);
+    const {stores, setTool} = useContext(PageContext);
+    const {tracking} = useContext(AppContext);
+    const {state, actions, dispatch} = stores.chip;
+    const { theme } = useContext(AppContext);
+
+    const [hdl, setHdl] = useStateInitializer(state.files.hdl);
+    const [tst, setTst] = useStateInitializer(state.files.tst);
+    const [cmp, setCmp] = useStateInitializer(state.files.cmp);
+    const [out, setOut] = useStateInitializer(state.files.out);
+
+    const hdlPanelRef = useRef<HTMLDivElement>(null);
+    const partsPanelRef = useRef<HTMLDivElement>(null);
+    const testPanelRef = useRef<HTMLDivElement>(null);
+    //declare previous widths of panels
+    const [prevHdlWidth, setPrevHdlWidth] = useState<number>();
+    const [prevPartsPanelWidth, setPrevPartsPanelWidth] = useState<number>();
+    const [initPartsPanelLeftPos, setInitPartsPanelLeftPos] = useState<number>();
+    const [initTestPanelLeftPos, setInitTestPanelLeftPos] = useState<number>();
 
 
-  const [hdl, setHdl] = useStateInitializer(state.files.hdl);
-  const [tst, setTst] = useStateInitializer(state.files.tst);
-  const [cmp, setCmp] = useStateInitializer(state.files.cmp);
-  const [out, setOut] = useStateInitializer(state.files.out);
+    useResizeObserver(hdlPanelRef, (entry) => {
+        //move parts panel to the right according to width
 
-  useEffect(() => {
-    setTool("chip");
-  }, [setTool]);
+        const {inlineSize: width} = entry.contentBoxSize[0];
+        if (!prevHdlWidth) {
+            setPrevHdlWidth(width);
+            return;
+        }
+        if(prevHdlWidth !== width&&partsPanelRef.current&&initPartsPanelLeftPos&&initTestPanelLeftPos){
+            partsPanelRef.current.style.left =  -initPartsPanelLeftPos + width + "px";
+            partsPanelRef.current.style.width = initTestPanelLeftPos- partsPanelRef.current.offsetLeft + "px";
+            setPrevHdlWidth(width);
+        }
+    });
+    useResizeObserver(partsPanelRef, (entry) => {
+        //move parts panel to the right according to width
+
+        const {inlineSize: width} = entry.contentBoxSize[0];
+        if(!prevPartsPanelWidth){
+            setPrevPartsPanelWidth(width);
+            return;
+        }
+        if(prevPartsPanelWidth !== width&&partsPanelRef.current&&testPanelRef.current&&initTestPanelLeftPos&&prevHdlWidth){
+            const p = (width - initTestPanelLeftPos+prevHdlWidth)
+            testPanelRef.current.style.left =  (width - initTestPanelLeftPos+prevHdlWidth)  + "px";
+            testPanelRef.current.style.width = (screenWidth-initTestPanelLeftPos-p) + "px";
+            setPrevPartsPanelWidth(width);
+        }
+    });
+
+
+    useEffect(() => {
+        if(partsPanelRef.current) {
+            setInitPartsPanelLeftPos(partsPanelRef.current.offsetLeft)
+            console.log("initPartsPanelLeftPos", partsPanelRef.current.offsetLeft)
+        }
+    }, [partsPanelRef.current]);
+
+
+    useEffect(() => {
+        if(testPanelRef.current) {
+            setInitTestPanelLeftPos(testPanelRef.current.offsetLeft)
+            console.log("Set initTestPanelLeftPos", testPanelRef.current.offsetLeft)
+        }
+    }, [testPanelRef.current]);
+
+    useEffect(() => {
+        setTool("chip");
+    }, [setTool]);
 
   useEffect(() => {
     tracking.trackPage("/chip");
@@ -222,9 +275,10 @@ export const Chip = () => {
     </>
   );
   const hdlPanel = (
-    <Panel
-      className="_hdl_panel"
+  <Panel
+      className="_hdl_panel resizable"
       isEditorPanel={true}
+      panelRef={hdlPanelRef}
       header={
         <>
           <div tabIndex={0}>HDL</div>
@@ -333,7 +387,8 @@ export const Chip = () => {
 
   const pinsPanel = (
     <Panel
-      className="_parts_panel"
+      className="_parts_panel resizable"
+      panelRef={partsPanelRef}
       header={
         <>
           <div>
@@ -367,7 +422,9 @@ export const Chip = () => {
 
   const testPanel = (
     <TestPanel
+      panelClassName={"resizable"}
       runner={runner}
+      panelRef={testPanelRef}
       disabled={state.sim.invalid}
       showLoad={false}
       prefix={

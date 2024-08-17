@@ -1,4 +1,5 @@
-import { CSSProperties, ReactNode } from "react";
+import { CSSProperties, ReactNode,
+  useEffect,useState,useRef} from "react";
 import "./../pico/accordion.scss";
 
 export const Panel = (props: {
@@ -8,7 +9,10 @@ export const Panel = (props: {
   className?: string;
   style?: CSSProperties;
   isEditorPanel?: boolean;
+  panelRef?: React.RefObject<HTMLDivElement>;
 }) => {
+
+
   return (
     <article
       className={[
@@ -16,6 +20,7 @@ export const Panel = (props: {
         props.className ?? "",
         props.isEditorPanel ? "editor" : "",
       ].join(" ")}
+       ref={props.panelRef}
     >
       {props.header && <header>{props.header}</header>}
       <main>{props.children}</main>
