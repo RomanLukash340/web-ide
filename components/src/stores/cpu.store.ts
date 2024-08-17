@@ -133,8 +133,8 @@ export function makeCpuStore(
       const passed = compare(state.test.cmp.trim(), test.log().trim());
       setStatus(
         passed
-          ? `Test passed`
-          : `Test failed`,
+          ? `Test passed  &#9989;`
+          : `Test failed &#10060;`,
       );
     },
 

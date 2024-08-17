@@ -176,8 +176,8 @@ export function makeVmStore(
       const passed = compare(state.files.cmp.trim(), state.files.out);
       setStatus(
         passed
-          ? `Test passed`
-          : `Test failed`,
+          ? `Test passed  &#9989;`
+          : `Test failed &#10060;`,
       );
     },
 

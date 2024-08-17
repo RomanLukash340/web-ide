@@ -279,8 +279,8 @@ export function makeChipStore(
       Promise.resolve().then(() => {
         setStatus(
           passed
-            ? `Test passed`
-            : `Test failed`,
+            ? `Test passed  &#9989;`
+            : `Test failed &#10060;`,
         );
       });
     },
