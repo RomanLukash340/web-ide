@@ -61,6 +61,7 @@ export function makeVisualization(
   chip: Chip,
   updateAction?: () => void,
   parameters?: Set<string>,
+  stroke_color: "black" | "white" = "black",
 ): ReactElement | undefined {
   if (chip instanceof ALU) {
     return (
@@ -69,6 +70,7 @@ export function makeVisualization(
         op={chip.op()}
         D={chip.in("y").busVoltage}
         out={chip.out().busVoltage}
+        stroke_color={stroke_color}
         flag={
           (chip.out("zr").voltage() === HIGH
             ? Flags.Zero
@@ -115,6 +117,7 @@ export function makeVisualization(
           out={chip.state.ALU}
           op={bits.op}
           flag={chip.state.flag as keyof typeof Flags}
+          stroke_color={stroke_color}
         />
       </>
     );
@@ -135,7 +138,7 @@ export function makeVisualization(
   }
 
   const vis = [...chip.parts]
-    .map((chip) => makeVisualization(chip, updateAction))
+    .map((chip) => makeVisualization(chip, updateAction, undefined, stroke_color))
     .filter((v) => v !== undefined);
   return vis.length > 0 ? <>{vis}</> : undefined;
 }
@@ -146,11 +149,12 @@ export function makeVisualizationsWithId(
   },
   updateAction?: () => void,
   parameters?: Set<string>,
+  stroke_color: "black" | "white" = "black",
 ): [string, ReactElement][] {
   return [...chip.parts]
     .map((part, i): [string, ReactElement | undefined] => [
       `${part.id}_${i}`,
-      makeVisualization(part, updateAction, parameters),
+      makeVisualization(part, updateAction, parameters, stroke_color),
     ])
     .filter(([_, v]) => v !== undefined) as [string, ReactElement][];
 }

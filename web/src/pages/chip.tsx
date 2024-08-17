@@ -29,7 +29,7 @@ import { CHIP_PROJECTS } from "@nand2tetris/projects/base.js";
 import { HDL } from "@nand2tetris/simulator/languages/hdl.js";
 import { Timer } from "@nand2tetris/simulator/timer.js";
 import { TestPanel } from "src/shell/test_panel";
-import { AppContext } from "../App.context";
+import {AppContext} from "../App.context";
 import { PageContext } from "../Page.context";
 import { Editor } from "../shell/editor";
 import { Accordian, Panel } from "../shell/panel";
@@ -40,6 +40,8 @@ export const Chip = () => {
   const { stores, setTool } = useContext(PageContext);
   const { tracking } = useContext(AppContext);
   const { state, actions, dispatch } = stores.chip;
+  const { theme } = useContext(AppContext);
+
 
   const [hdl, setHdl] = useStateInitializer(state.files.hdl);
   const [tst, setTst] = useStateInitializer(state.files.tst);
@@ -315,7 +317,8 @@ export const Chip = () => {
     </fieldset>
   );
 
-  const visualizations: [string, ReactNode][] = makeVisualizationsWithId(
+    const strokeColor = theme == "light" ? "black": "white";
+    const visualizations: [string, ReactNode][] = makeVisualizationsWithId(
     {
       parts: state.sim.chip,
     },
@@ -323,6 +326,7 @@ export const Chip = () => {
       dispatch.current({ action: "updateChip" });
     },
     state.controls.visualizationParameters,
+    strokeColor,
   );
 
   const pinResetDispatcher = new PinResetDispatcher();
