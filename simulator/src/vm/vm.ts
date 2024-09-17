@@ -48,6 +48,7 @@ export interface VmFunction {
   labels: Record<string, number>;
   operations: VmInstruction[];
   opBase: number;
+  lineNumberOffset: number;
 }
 
 interface VmFunctionInvocation {
@@ -64,6 +65,8 @@ interface VmFunctionInvocation {
   thatInitialized: boolean;
   // The size of the memory block pointed to by the function's THIS (if exists)
   thisN?: number;
+  // Function line number offset 
+  lineNumberOffset: number;
 }
 
 export const IMPLICIT = "__implicit";
@@ -73,6 +76,8 @@ export const SYS_INIT: VmFunction = {
   labels: {},
   nVars: 0,
   opBase: 0,
+  //TODO: RL change?
+  lineNumberOffset: 0,
   operations: [
     { op: "function", name: "Sys.init", nVars: 0 },
     { op: "call", name: "Main.main", nArgs: 0 },
@@ -232,8 +237,7 @@ export class Vm {
           if (VM_BUILTINS[call.name].nArgs != call.nArgs) {
             return Err(
               createError(
-                `OS function ${call.name} expects ${
-                  VM_BUILTINS[call.name].nArgs
+                `OS function ${call.name} expects ${VM_BUILTINS[call.name].nArgs
                 } arguments, not ${call.nArgs}`,
                 call.span,
               ),
@@ -293,6 +297,7 @@ export class Vm {
       labels: {},
       operations: [{ op: "function", name, nVars, span: instructions[i].span }],
       opBase: 0,
+      lineNumberOffset: i + 2
     };
 
     const declaredLabels: Set<string> = new Set();
@@ -333,14 +338,14 @@ export class Vm {
             segment: (
               instructions[i] as {
                 segment:
-                  | "argument"
-                  | "local"
-                  | "static"
-                  | "constant"
-                  | "this"
-                  | "that"
-                  | "pointer"
-                  | "temp";
+                | "argument"
+                | "local"
+                | "static"
+                | "constant"
+                | "this"
+                | "that"
+                | "pointer"
+                | "temp";
               }
             ).segment,
             offset: (instructions[i] as { offset: number }).offset,
@@ -372,8 +377,7 @@ export class Vm {
           if (fn.labels[label])
             return Err(
               createError(
-                `Cannot redeclare label ${label} in function ${
-                  fn.name
+                `Cannot redeclare label ${label} in function ${fn.name
                 } (previously at line ${fn.labels[label] + 1})`,
                 instructions[i].span,
               ),
@@ -425,6 +429,7 @@ export class Vm {
         opPtr: 0,
         thisInitialized: false,
         thatInitialized: false,
+        lineNumberOffset: -3 //TODO: RL change?
       };
     }
     return invocation;
@@ -555,6 +560,7 @@ export class Vm {
         nArgs: 0,
         thisInitialized: false,
         thatInitialized: false,
+        lineNumberOffset: -2 //TODO: RL change
       },
     ];
     this.memory.reset();
@@ -619,12 +625,12 @@ export class Vm {
     this.os.paused = paused;
   }
 
-  step(): number | undefined {
+  step(): VmStepResult {
     if (this.os.sys.halted) {
-      return this.os.sys.exitCode;
+      return { exitCode: this.os.sys.exitCode, lineNumber: this.invocation.lineNumberOffset + this.invocation.opPtr };
     }
     if (this.os.sys.blocked) {
-      return;
+      return { lineNumber: this.invocation.lineNumberOffset + this.invocation.opPtr };
     }
     if (this.os.sys.released && this.operation?.op == "call") {
       const ret = this.os.sys.readReturnValue();
@@ -632,20 +638,23 @@ export class Vm {
       this.memory.set(sp, ret);
       this.memory.SP = sp + 1;
       this.invocation.opPtr += 1;
-      return;
+      return { lineNumber: this.invocation.lineNumberOffset + this.invocation.opPtr };
     }
 
     if (this.operation == undefined) {
       this.os.sys.halt();
       return this.step();
     }
-
+    const startOpPtr = this.invocation.opPtr
     const operation = this.operation;
 
     if (operation.op === "label") {
       this.invocation.opPtr += 1;
       return this.step();
     }
+
+    // const e = this.currentFunction
+    // const lineNumber = e.lineNumberOffset + startOpPtr-1;
 
     switch (operation.op) {
       case "push": {
@@ -736,11 +745,12 @@ export class Vm {
             frameBase: base,
             thisInitialized: false,
             thatInitialized: false,
+            lineNumberOffset: -1,//TODO: RL change?
           });
         } else if (VM_BUILTINS[fnName]) {
           const ret = VM_BUILTINS[fnName].func(this.memory, this.os);
           if (this.os.sys.blocked) {
-            return; // we will handle the return when the OS is released
+            return { lineNumber: -1 }; // we will handle the return when the OS is released
           }
           const sp = this.memory.SP - operation.nArgs;
           this.memory.set(sp, ret);
@@ -755,13 +765,16 @@ export class Vm {
         this.invocation.opPtr = ret;
         if (this.executionStack.length === 0) {
           this.returnLine = line;
-          return 0;
+          return { exitCode: 0, lineNumber: this.invocation.lineNumberOffset + this.invocation.opPtr };
         }
         break;
       }
     }
     this.invocation.opPtr += 1;
-    return;
+    const e = this.currentFunction
+    const lineNumber = e.lineNumberOffset + this.invocation.opPtr - 1;
+
+    return { lineNumber };
   }
 
   private goto(label: string) {
@@ -887,10 +900,15 @@ export class Vm {
   }
 }
 
+
+interface VmStepResult {
+  exitCode?: number;
+  lineNumber: number;
+}
+
 export function writeFrame(frame: VmFrame): string {
   return [
-    `Frame: ${frame.fn?.name ?? "Unknown Fn"} ARG:${frame.frame.ARG} LCL:${
-      frame.frame.LCL
+    `Frame: ${frame.fn?.name ?? "Unknown Fn"} ARG:${frame.frame.ARG} LCL:${frame.frame.LCL
     }`,
     `Args: ${writeFrameValues(frame.args)}`,
     `Lcls: ${writeFrameValues(frame.locals)}`,

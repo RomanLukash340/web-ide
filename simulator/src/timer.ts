@@ -50,7 +50,6 @@ export abstract class Timer {
       const timingLabel = `Timing ${steps} steps`;
       console.time(timingLabel);
       while (!done && steps--) {
-        // done = await this.tick();
         done = await this.tick();
       }
       console.timeEnd(timingLabel);

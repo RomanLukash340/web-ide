@@ -48,7 +48,7 @@ const VM = () => {
   const { setTool, stores } = useContext(PageContext);
   const { state, actions, dispatch } = stores.vm;
   const { setStatus } = useContext(BaseContext);
-
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [tst, setTst] = useStateInitializer(state.files.tst);
   const [out, setOut] = useStateInitializer(state.files.out);
   const [cmp, setCmp] = useStateInitializer(state.files.cmp);
@@ -70,9 +70,9 @@ const VM = () => {
           ? "Program halted"
           : `Program exited with error code ${state.controls.exitCode}${
               isSysError(state.controls.exitCode)
-                ? `: ${ERROR_MESSAGES[state.controls.exitCode]}`
-                : ""
-            }`,
+            ? `: ${ERROR_MESSAGES[state.controls.exitCode]}`
+            : ""
+          }`,
       );
     }
   }, [state.controls.exitCode]);
@@ -81,9 +81,17 @@ const VM = () => {
   const testRunner = useRef<Timer>();
   const [runnersAssigned, setRunnersAssigned] = useState(false);
   useEffect(() => {
+  
     vmRunner.current = new (class VMTimer extends Timer {
+     
       override async tick() {
-        return actions.step();
+        const {done, lineNumber} = actions.step();
+        console.log("Breakpoints",breakpoints);
+        if(breakpoints.includes(lineNumber)){
+          console.log("Checking if line number in breakpoints")
+          return true;
+        }
+        return done;
       }
 
       override finishFrame() {
@@ -103,7 +111,10 @@ const VM = () => {
 
     testRunner.current = new (class TestTimer extends Timer {
       override async tick() {
-        return actions.testStep();
+        const t = actions.testStep();
+        actions.setPaused(!this.running);
+        dispatch.current({ action: "update" });
+        return t;
       }
 
       override finishFrame() {
@@ -127,7 +138,7 @@ const VM = () => {
       vmRunner.current?.stop();
       testRunner.current?.stop();
     };
-  }, [actions, dispatch]);
+  }, [actions, dispatch, breakpoints]);
 
   const uploadRef = useRef<HTMLInputElement>(null);
 
@@ -170,13 +181,12 @@ const VM = () => {
 
   return (
     <div
-      className={`Page VmPage grid ${
-        state.config.screenScale == 0
+      className={`Page VmPage grid ${state.config.screenScale == 0
           ? "no-screen"
           : state.config.screenScale == 2
             ? "large-screen"
             : "normal"
-      }`}
+        }`}
     >
       <Panel
         className="program"
@@ -217,6 +227,7 @@ const VM = () => {
         }
       >
         <Editor
+          addBreakPoints={true}
           value={state.files.vm}
           onChange={(source: string) => {
             actions.setVm(source);
@@ -228,6 +239,7 @@ const VM = () => {
               : undefined
           }
           error={state.controls.error}
+          setBreakpoints={setBreakpoints}
         />
       </Panel>
       <Panel className="vm" header={<Trans>VM Structures</Trans>}>
@@ -306,7 +318,6 @@ const VM = () => {
           stackRef.current?.rerender();
         }}
       />
-
       {runnersAssigned && (
         <TestPanel
           runner={testRunner}
@@ -404,7 +415,7 @@ function VMStackFrame({
       <main>
         <p>
           Stack:
-          <code>[{frame.stack.values.join(", ")}]</code>
+          <code> {frame.stack.values.join(", ")}</code>
         </p>
         {frame.usedSegments?.has("local") && (
           <p>

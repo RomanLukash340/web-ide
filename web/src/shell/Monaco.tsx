@@ -1,10 +1,12 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import { CompilationError, Span } from "@nand2tetris/simulator/languages/base";
 import { Action } from "@nand2tetris/simulator/types";
+import { MonacoBreakpoint } from "monaco-breakpoints";
 import * as monacoT from "monaco-editor/esm/vs/editor/editor.api";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App.context";
 import { Decoration, HighlightType } from "./editor";
+import { PageContext } from "src/Page.context";
 
 const isRangeVisible = (
   editor: monacoT.editor.IStandaloneCodeEditor | undefined,
@@ -78,6 +80,7 @@ export const Monaco = ({
   dynamicHeight = false,
   alwaysRecenter = true,
   lineNumberTransform,
+  setBreakpoints
 }: {
   value: string;
   onChange: Action<string>;
@@ -90,7 +93,9 @@ export const Monaco = ({
   customDecorations?: Decoration[];
   dynamicHeight?: boolean;
   alwaysRecenter?: boolean;
+  addBreakpoints?: boolean;
   lineNumberTransform?: (n: number) => string;
+  setBreakpoints?: (n: number[]) => void;
 }) => {
   const { theme } = useContext(AppContext);
   const monaco = useRef<typeof monacoT>();
@@ -100,7 +105,21 @@ export const Monaco = ({
   const decorations = useRef<string[]>([]);
   const highlight = useRef<Span | number | undefined>(undefined);
   const customDecorations = useRef<Decoration[]>([]);
-
+  const [instance, setInstace] = useState<MonacoBreakpoint>();
+  const [b, setB] = useState<boolean>(false);
+  const bCallback = useCallback((breakpoints: number[]) => {
+    console.log('breakpointChanged: ', breakpoints);
+    if(setBreakpoints!==undefined){
+      setBreakpoints(breakpoints);
+    }
+  }, []);
+  useEffect(() => {
+    if (instance && !b) {
+      console.log("add callback for breakpoints")
+      instance.on('breakpointChanged', bCallback)
+      setB(true);
+    }
+  }, [instance, bCallback])
   const codeTheme = useCallback(() => {
     const isDark =
       theme === "system"
@@ -122,9 +141,9 @@ export const Monaco = ({
           highlight.current == lineCount
             ? (editor.current?.getModel()?.getValueLength() ?? 0)
             : (editor.current?.getModel()?.getOffsetAt({
-                lineNumber: highlight.current + 1,
-                column: 0,
-              }) ?? 1) - 1;
+              lineNumber: highlight.current + 1,
+              column: 0,
+            }) ?? 1) - 1;
         newHighlight = { start: start, end: end, line: highlight.current };
       }
     } else {
@@ -169,6 +188,10 @@ export const Monaco = ({
   // Set options when mounting
   const onMount: OnMount = useCallback(
     (ed, mon) => {
+      if (instance === undefined) {
+        setInstace(new MonacoBreakpoint({ editor: ed }))
+        console.log("Breakpoints editor", ed)
+      }
       monaco.current = mon;
       editor.current = ed;
       editor.current?.updateOptions({
@@ -189,6 +212,8 @@ export const Monaco = ({
         quickSuggestions: {
           other: "inline",
         },
+        glyphMargin: true,
+        
       });
 
       document.fonts.ready.then(() => {

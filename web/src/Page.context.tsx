@@ -59,7 +59,7 @@ export function usePageContext() {
       asm,
       vm,
       compiler,
-    },
+    }
   };
 }
 
