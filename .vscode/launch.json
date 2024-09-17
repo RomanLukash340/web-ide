@@ -2,29 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Launch Edge against localhost",
-      "url": "http://localhost:3000/web-ide/vm",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
-      "name": "Launch via NPM",
-      "request": "launch",
-      "runtimeArgs": [
-        "run",
-        "cli",
-        "compile",
-        "ScreenCustom.jack"
-      ],
-      "runtimeExecutable": "npm",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "node",
-      "preLaunchTask": "${defaultBuildTask}"
-    },
-    {
       "name": "Debug Computron Tests",
       "type": "node",
       "request": "launch",
