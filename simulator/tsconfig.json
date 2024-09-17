@@ -5,5 +5,6 @@
     "rootDir": "src",
     "tsBuildInfoFile": "build/.tsbuildinfo"
   },
+  "souceMap":true,
   "include": ["src"]
 }

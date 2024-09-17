@@ -237,7 +237,8 @@ export class Vm {
           if (VM_BUILTINS[call.name].nArgs != call.nArgs) {
             return Err(
               createError(
-                `OS function ${call.name} expects ${VM_BUILTINS[call.name].nArgs
+                `OS function ${call.name} expects ${
+                  VM_BUILTINS[call.name].nArgs
                 } arguments, not ${call.nArgs}`,
                 call.span,
               ),
@@ -338,14 +339,14 @@ export class Vm {
             segment: (
               instructions[i] as {
                 segment:
-                | "argument"
-                | "local"
-                | "static"
-                | "constant"
-                | "this"
-                | "that"
-                | "pointer"
-                | "temp";
+                  | "argument"
+                  | "local"
+                  | "static"
+                  | "constant"
+                  | "this"
+                  | "that"
+                  | "pointer"
+                  | "temp";
               }
             ).segment,
             offset: (instructions[i] as { offset: number }).offset,
@@ -377,7 +378,8 @@ export class Vm {
           if (fn.labels[label])
             return Err(
               createError(
-                `Cannot redeclare label ${label} in function ${fn.name
+                `Cannot redeclare label ${label} in function ${
+                  fn.name
                 } (previously at line ${fn.labels[label] + 1})`,
                 instructions[i].span,
               ),
@@ -645,16 +647,13 @@ export class Vm {
       this.os.sys.halt();
       return this.step();
     }
-    const startOpPtr = this.invocation.opPtr
+
     const operation = this.operation;
 
     if (operation.op === "label") {
       this.invocation.opPtr += 1;
       return this.step();
     }
-
-    // const e = this.currentFunction
-    // const lineNumber = e.lineNumberOffset + startOpPtr-1;
 
     switch (operation.op) {
       case "push": {
@@ -908,7 +907,8 @@ interface VmStepResult {
 
 export function writeFrame(frame: VmFrame): string {
   return [
-    `Frame: ${frame.fn?.name ?? "Unknown Fn"} ARG:${frame.frame.ARG} LCL:${frame.frame.LCL
+    `Frame: ${frame.fn?.name ?? "Unknown Fn"} ARG:${frame.frame.ARG} LCL:${
+      frame.frame.LCL
     }`,
     `Args: ${writeFrameValues(frame.args)}`,
     `Lcls: ${writeFrameValues(frame.locals)}`,

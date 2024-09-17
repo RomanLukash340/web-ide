@@ -65,7 +65,6 @@ export const Editor = ({
   className = "",
   style = {},
   disabled = false,
-  addBreakPoints=false,
   value,
   error,
   onChange,
@@ -83,7 +82,6 @@ export const Editor = ({
   className?: string;
   style?: CSSProperties;
   disabled?: boolean;
-  addBreakPoints?: boolean;
   value: string;
   error?: CompilationError;
   onChange: Action<string>;

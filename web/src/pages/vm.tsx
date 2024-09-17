@@ -70,9 +70,9 @@ const VM = () => {
           ? "Program halted"
           : `Program exited with error code ${state.controls.exitCode}${
               isSysError(state.controls.exitCode)
-            ? `: ${ERROR_MESSAGES[state.controls.exitCode]}`
-            : ""
-          }`,
+                ? `: ${ERROR_MESSAGES[state.controls.exitCode]}`
+                : ""
+            }`,
       );
     }
   }, [state.controls.exitCode]);
@@ -81,14 +81,11 @@ const VM = () => {
   const testRunner = useRef<Timer>();
   const [runnersAssigned, setRunnersAssigned] = useState(false);
   useEffect(() => {
-  
     vmRunner.current = new (class VMTimer extends Timer {
-     
       override async tick() {
         const {done, lineNumber} = actions.step();
-        console.log("Breakpoints",breakpoints);
+        console.log("Breakpoints", breakpoints);
         if(breakpoints.includes(lineNumber)){
-          console.log("Checking if line number in breakpoints")
           return true;
         }
         return done;
@@ -181,12 +178,13 @@ const VM = () => {
 
   return (
     <div
-      className={`Page VmPage grid ${state.config.screenScale == 0
+      className={`Page VmPage grid ${
+        state.config.screenScale == 0
           ? "no-screen"
           : state.config.screenScale == 2
             ? "large-screen"
             : "normal"
-        }`}
+      }`}
     >
       <Panel
         className="program"
@@ -227,7 +225,6 @@ const VM = () => {
         }
       >
         <Editor
-          addBreakPoints={true}
           value={state.files.vm}
           onChange={(source: string) => {
             actions.setVm(source);
@@ -318,6 +315,7 @@ const VM = () => {
           stackRef.current?.rerender();
         }}
       />
+
       {runnersAssigned && (
         <TestPanel
           runner={testRunner}
@@ -415,7 +413,7 @@ function VMStackFrame({
       <main>
         <p>
           Stack:
-          <code> {frame.stack.values.join(", ")}</code>
+          <code>[{frame.stack.values.join(", ")}]</code>
         </p>
         {frame.usedSegments?.has("local") && (
           <p>

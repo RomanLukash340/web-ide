@@ -6,7 +6,6 @@ import * as monacoT from "monaco-editor/esm/vs/editor/editor.api";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AppContext } from "../App.context";
 import { Decoration, HighlightType } from "./editor";
-import { PageContext } from "src/Page.context";
 
 const isRangeVisible = (
   editor: monacoT.editor.IStandaloneCodeEditor | undefined,
@@ -93,7 +92,6 @@ export const Monaco = ({
   customDecorations?: Decoration[];
   dynamicHeight?: boolean;
   alwaysRecenter?: boolean;
-  addBreakpoints?: boolean;
   lineNumberTransform?: (n: number) => string;
   setBreakpoints?: (n: number[]) => void;
 }) => {
@@ -141,9 +139,9 @@ export const Monaco = ({
           highlight.current == lineCount
             ? (editor.current?.getModel()?.getValueLength() ?? 0)
             : (editor.current?.getModel()?.getOffsetAt({
-              lineNumber: highlight.current + 1,
-              column: 0,
-            }) ?? 1) - 1;
+                lineNumber: highlight.current + 1,
+                column: 0,
+              }) ?? 1) - 1;
         newHighlight = { start: start, end: end, line: highlight.current };
       }
     } else {
@@ -190,7 +188,6 @@ export const Monaco = ({
     (ed, mon) => {
       if (instance === undefined) {
         setInstace(new MonacoBreakpoint({ editor: ed }))
-        console.log("Breakpoints editor", ed)
       }
       monaco.current = mon;
       editor.current = ed;
@@ -213,7 +210,6 @@ export const Monaco = ({
           other: "inline",
         },
         glyphMargin: true,
-        
       });
 
       document.fonts.ready.then(() => {
